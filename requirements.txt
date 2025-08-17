@@ -1,0 +1,13 @@
+# Core
+fastapi==0.109.1
+uvicorn==0.27.0
+
+# Pydantic
+pydantic-settings==2.2.1
+pydantic==2.6.4  # Required for extra types
+
+# Environment
+python-dotenv==1.0.1  # Optional but recommended
+
+# LLM Provider (e.g. Gemini)
+google-generativeai==0.3.2  # Only if using Gemini
