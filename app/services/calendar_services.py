@@ -40,14 +40,15 @@ def authenticate_google_calendar():
             token.write(creds.to_json())
     return creds # <-- IMPORTANT: Return the credentials
 
+# In app/services/calendar_services.py
+
 class GoogleCalendarService:
     def __init__(self, credentials):
         """Initialize the service object."""
-        self.service = build('calendar', 'v3', credentials=credentials) 
+        self.service = build('calendar', 'v3', credentials=credentials)
 
     def get_upcoming_events(self, max_results=10):
         """Fetches upcoming events from the user's primary calendar."""
-        import datetime
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         
         events_result = self.service.events().list(
@@ -58,29 +59,29 @@ class GoogleCalendarService:
             orderBy='startTime'
         ).execute()
 
-        return events_result.get('items', []) 
-    
-    # --- create events
-    def create_event( sef, summary, start_time, end_time, description = None, location = None):
-    # Cereate a new even on user's Pimary calendar
-        event  = {
+        return events_result.get('items', [])
+
+    # --- 👇 This method must be INDENTED to be part of the class 👇 ---
+    def create_event(self, summary, start_time, end_time, description=None, location=None):
+        """Creates a new event on the user's primary calendar."""
+        event = {
             'summary': summary,
             'location': location,
             'description': description,
             'start': {
-                'dateTime': f"{start_time}-07:00", # manually adding PDT time zone
+                'dateTime': f"{start_time}",
                 'timeZone': 'America/Vancouver',
             },
             'end': {
-                'dateTime': f"{end_time}-07:00",
+                'dateTime': f"{end_time}",
                 'timeZone': 'America/Vancouver',
             },
         }
 
         created_event = self.service.events().insert(
-            calenderId = 'primary',
-            body = event
+            calendarId='primary',
+            body=event
         ).execute()
-
+        
         print(f"Event created: {created_event.get('htmlLink')}")
         return created_event
