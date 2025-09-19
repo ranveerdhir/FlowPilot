@@ -1,6 +1,7 @@
 # calender_services.py
 
 import os.path
+import datetime
 from google.auth.transport.requests import Request  # <-- IMPORT THIS
 from google.oauth2.credentials import Credentials  # <-- CAPITAL 'C'
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -12,7 +13,6 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 def authenticate_google_calendar():
     """Handles the OAuth2 authentication flow and returns the credentials object."""
     creds = None 
-        # --- THIS IS THE CORRECTED LOGIC ---
 
     # 1. Get the directory of the current script (e.g., .../app/services)
     script_dir = os.path.dirname(__file__)
@@ -43,7 +43,7 @@ def authenticate_google_calendar():
 class GoogleCalendarService:
     def __init__(self, credentials):
         """Initialize the service object."""
-        self.service = build('calendar', 'v3', credentials=credentials) # <-- FIX: 'calendar'
+        self.service = build('calendar', 'v3', credentials=credentials) 
 
     def get_upcoming_events(self, max_results=10):
         """Fetches upcoming events from the user's primary calendar."""
@@ -58,4 +58,29 @@ class GoogleCalendarService:
             orderBy='startTime'
         ).execute()
 
-        return events_result.get('items', []) # <-- FIX: events_result
+        return events_result.get('items', []) 
+    
+    # --- create events
+    def create_event( sef, summary, start_time, end_time, description = None, location = None):
+    # Cereate a new even on user's Pimary calendar
+        event  = {
+            'summary': summary,
+            'location': location,
+            'description': description,
+            'start': {
+                'dateTime': f"{start_time}-07:00", # manually adding PDT time zone
+                'timeZone': 'America/Vancouver',
+            },
+            'end': {
+                'dateTime': f"{end_time}-07:00",
+                'timeZone': 'America/Vancouver',
+            },
+        }
+
+        created_event = self.service.events().insert(
+            calenderId = 'primary',
+            body = event
+        ).execute()
+
+        print(f"Event created: {created_event.get('htmlLink')}")
+        return created_event
