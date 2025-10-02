@@ -2,6 +2,8 @@
 fastapi
 uvicorn
 
+python-dotenv
+
 # Pydantic
 pydantic-settings
 pydantic  # Required for extra types
@@ -16,3 +18,5 @@ google-auth-oauthlib
 
 # LLM Provider (e.g. Gemini)
 google-generativeai  # Only if using Gemini
+
+startette
