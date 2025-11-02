@@ -19,4 +19,4 @@ google-auth-oauthlib
 # LLM Provider (e.g. Gemini)
 google-generativeai  # Only if using Gemini
 
-startette
+starlette
