@@ -2,7 +2,7 @@
 import os
 import json
 import sqlite3
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from starlette.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
@@ -53,7 +53,7 @@ def auth_callback(request: Request, code: str, state: str):
     """Handles the OAuth callback from Google."""
     session_state = request.session.pop("state", None)
     if not session_state or session_state != state:
-        return {"error": "State mismatch"}, 400
+        raise HTTPException(status_code=400, detail="State mismatch")
 
     flow = Flow.from_client_config(
         client_config={

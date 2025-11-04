@@ -1,4 +1,5 @@
 # app/main.py
+
 import os
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
@@ -6,6 +7,10 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Initialize the database tables
+from database import init_db
+init_db()
 
 # Import your routers
 from app.router import router_calendar
@@ -17,7 +22,7 @@ app = FastAPI(title="Flowpilot")
 # This requires a secret key, which you should load from your environment
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.getenv("APP_SECRET_KEY")
+    secret_key=os.getenv("GOOGLE_CLIENT_SECRET")
 )
 
 # Include your new authentication router
