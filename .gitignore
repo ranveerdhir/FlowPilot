@@ -2,5 +2,5 @@ venv/
 .env
 credentials.json
 tokes.json
-fkowpilot.db
+flowpilot.db
 .env .*
