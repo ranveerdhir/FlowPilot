@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from typing import Optional
@@ -53,4 +52,6 @@ def create_new_event(event_data: EventCreate, request: Request):
         description=event_data.description,
         location=event_data.location
     )
+    if created_event is None:
+        return {"error": "Failed to create event. Check your event data and try again."}
     return {"message": "Event created successfully!", "event_link": created_event.get('htmlLink')}

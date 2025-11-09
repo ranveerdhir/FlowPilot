@@ -16,7 +16,12 @@ load_dotenv()
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 REDIRECT_URI = "http://127.0.0.1:8000/api/auth/callback" # Must match Google Cloud Console
-SCOPES = ['https://www.googleapis.com/auth/calendar']
+SCOPES = [
+    'https://www.googleapis.com/auth/calendar',
+    'openid',
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
 DATABASE_FILE = "flowpilot.db"
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -51,8 +56,11 @@ def auth_init(request: Request):
 @router.get("/callback")
 def auth_callback(request: Request, code: str, state: str):
     """Handles the OAuth callback from Google."""
+    print(f"Callback called with code={code}, state={state}")
     session_state = request.session.pop("state", None)
+    print(f"Session state: {session_state}")
     if not session_state or session_state != state:
+        print("State mismatch error")
         raise HTTPException(status_code=400, detail="State mismatch")
 
     flow = Flow.from_client_config(
@@ -71,12 +79,18 @@ def auth_callback(request: Request, code: str, state: str):
 
     flow.fetch_token(code=code)
     creds = flow.credentials
+    print(f"Fetched credentials: token={creds.token}, scopes={creds.scopes}")
 
     # Get user info from Google
     from googleapiclient.discovery import build
     user_info_service = build('oauth2', 'v2', credentials=creds)
-    user_info = user_info_service.userinfo().get().execute()
-    
+    try:
+        user_info = user_info_service.userinfo().get().execute()
+        print(f"User info: {user_info}")
+    except Exception as e:
+        print(f"Error fetching user info: {e}")
+        raise HTTPException(status_code=500, detail=f"Google userinfo error: {e}")
+
     user_email = user_info['email']
     user_name = user_info.get('name', '')
 
@@ -90,5 +104,6 @@ def auth_callback(request: Request, code: str, state: str):
     
     # Store user email in session to "log them in"
     request.session["user_email"] = user_email
-    
+    print(f"User {user_email} logged in and credentials saved.")
+
     return RedirectResponse(url="/docs") # Redirect to docs page on success

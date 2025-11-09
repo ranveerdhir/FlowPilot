@@ -1,4 +1,3 @@
-
 # calender_services.py
 
 import os.path
@@ -13,17 +12,19 @@ from googleapiclient.errors import HttpError
 from fastapi import Request, HTTPException
 
 # If modifying these scopes, delete the token.json file.
-SCOPES = ['https://www.googleapis.com/auth/calendar']
+SCOPES = [
+    "https://www.googleapis.com/auth/calendar",
+    "openid",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+]
 DATABASE_FILE = "flowpilot.db"
 
 def authenticate_google_calendar(request: Request):
-    """
-    Retrieves Google OAuth credentials for the currently logged-in user from the session and database.
-    Raises HTTPException if not authenticated or credentials missing.
-    """
     user_email = request.session.get("user_email")
     if not user_email:
         raise HTTPException(status_code=401, detail="User not authenticated")
+
     con = sqlite3.connect(DATABASE_FILE)
     cur = con.cursor()
     cur.execute("SELECT token_json FROM user_credentials WHERE user_email = ?", (user_email,))
@@ -31,8 +32,23 @@ def authenticate_google_calendar(request: Request):
     con.close()
     if not row:
         raise HTTPException(status_code=403, detail="No credentials found for user")
+
     token_json = row[0]
     creds = Credentials.from_authorized_user_info(json.loads(token_json))
+
+    if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        con = sqlite3.connect(DATABASE_FILE)
+        cur = con.cursor()
+        cur.execute(
+            "UPDATE user_credentials SET token_json = ? WHERE user_email = ?",
+            (creds.to_json(), user_email),
+        )
+        con.commit()
+        con.close()
+    elif not creds or not creds.valid:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
     return creds
 
 class GoogleCalendarService:
@@ -81,6 +97,7 @@ class GoogleCalendarService:
                 'timeZone': 'America/Vancouver',
             },
         }
+        print(f"Event payload being sent to Google: {event}")
 
         try:
             created_event = self.service.events().insert(

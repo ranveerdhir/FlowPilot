@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize the database tables
-from database import init_db
+from app.database import init_db
 init_db()
 
 # Import your routers
