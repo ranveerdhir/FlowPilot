@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+import logging
 from pydantic import BaseModel
 from typing import Optional
 from app.services.calendar_services import GoogleCalendarService, authenticate_google_calendar
@@ -18,9 +19,10 @@ def read_events(request: Request):
     """
     Authenticates with Google Calendar and fetches upcoming events for the logged-in user.
     """
-    print("--- /events GET endpoint was hit! ---")
+    logger = logging.getLogger("router_calendar")
+    logger.debug("/events GET endpoint was hit")
     creds = authenticate_google_calendar(request)
-    print("--- Authentication finished, have credentials. ---")
+    logger.debug("Authentication finished, have credentials")
 
     calendar_service = GoogleCalendarService(creds)
     events = calendar_service.get_upcoming_events(max_results=5)
@@ -40,9 +42,10 @@ def create_new_event(event_data: EventCreate, request: Request):
     """
     Create a new event in Google Calendar for the logged-in user.
     """
-    print("--/ events POST Endpoint was hit! --")
+    logger = logging.getLogger("router_calendar")
+    logger.debug("/events POST endpoint was hit")
     creds = authenticate_google_calendar(request)
-    print("--Authentication finished, have credentials. --")
+    logger.debug("Authentication finished, have credentials")
 
     calendar_service = GoogleCalendarService(creds)
     created_event = calendar_service.create_event(
@@ -53,5 +56,7 @@ def create_new_event(event_data: EventCreate, request: Request):
         location=event_data.location
     )
     if created_event is None:
+        logger.error("Failed to create event")
         return {"error": "Failed to create event. Check your event data and try again."}
+    logger.info("Event created successfully")
     return {"message": "Event created successfully!", "event_link": created_event.get('htmlLink')}

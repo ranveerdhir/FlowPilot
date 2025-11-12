@@ -3,7 +3,9 @@
 import os
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
+from app.config.config import settings
 from dotenv import load_dotenv
+from app import logging_config  # Initialize logging early
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,7 +24,7 @@ app = FastAPI(title="Flowpilot")
 # This requires a secret key, which you should load from your environment
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.getenv("GOOGLE_CLIENT_SECRET")
+    secret_key=(settings.session_secret or settings.google_client_secret)
 )
 
 # Include your new authentication router

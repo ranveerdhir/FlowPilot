@@ -9,6 +9,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+import logging
 from fastapi import Request, HTTPException
 
 # If modifying these scopes, delete the token.json file.
@@ -55,6 +56,7 @@ class GoogleCalendarService:
     def __init__(self, credentials):
         """Initialize the service object."""
         self.service = build('calendar', 'v3', credentials=credentials)
+        self.logger = logging.getLogger("google_calendar")
 
     def get_upcoming_events(self, max_results=10):
         """Fetches upcoming events from the user's primary calendar.
@@ -73,11 +75,11 @@ class GoogleCalendarService:
             ).execute()
         except HttpError as e:
             # API-specific error (e.g., auth, quota). Log and return empty list.
-            print(f"Google API error in get_upcoming_events: {e}")
+            self.logger.warning(f"Google API error in get_upcoming_events: {e}")
             return []
         except Exception as e:
             # Network/other unexpected error
-            print(f"Unexpected error in get_upcoming_events: {e}")
+            self.logger.exception(f"Unexpected error in get_upcoming_events: {e}")
             return []
 
         return events_result.get('items', [])
@@ -97,7 +99,8 @@ class GoogleCalendarService:
                 'timeZone': 'America/Vancouver',
             },
         }
-        print(f"Event payload being sent to Google: {event}")
+        # Debug-level payload log
+        self.logger.debug(f"Event payload being sent to Google: {event}")
 
         try:
             created_event = self.service.events().insert(
@@ -106,12 +109,12 @@ class GoogleCalendarService:
             ).execute()
         except HttpError as e:
             # API-specific error (e.g., auth, quota). Log and return None.
-            print(f"Google API error in create_event: {e}")
+            self.logger.warning(f"Google API error in create_event: {e}")
             return None
         except Exception as e:
             # Network/other unexpected error
-            print(f"Unexpected error in create_event: {e}")
+            self.logger.exception(f"Unexpected error in create_event: {e}")
             return None
 
-        print(f"Event created: {created_event.get('htmlLink')}")
+        self.logger.info(f"Event created: {created_event.get('htmlLink')}")
         return created_event

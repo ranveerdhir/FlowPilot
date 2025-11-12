@@ -1,4 +1,5 @@
 import sqlite3
+import logging
 
 DATABASE_FILE = "flowpilot.db"
 
@@ -28,9 +29,9 @@ def init_db():
         ''')
 
         con.commit()
-        print("Database initialized successfully.")
+        logging.getLogger("database").info("Database initialized successfully")
     except Exception as e:
-        print(f"Error initializing database: {e}")
+        logging.getLogger("database").exception(f"Error initializing database: {e}")
     finally:
         con.close()
 
